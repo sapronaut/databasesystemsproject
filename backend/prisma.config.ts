@@ -1,4 +1,4 @@
-import { definePrismaConfig } from "prisma/config";
+npx prisma migrate dev --name initimport { definePrismaConfig } from "prisma/config";
 
 export default definePrismaConfig({
   skills: {

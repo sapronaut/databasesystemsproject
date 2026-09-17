@@ -1,0 +1,145 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum Role {
+  ADMIN
+  ANALYST
+}
+
+enum PredictionResult {
+  FRAUD
+  NOT_FRAUD
+}
+
+enum AlertStatus {
+  OPEN
+  REVIEWED
+  DISMISSED
+}
+
+enum TransactionStatus {
+  APPROVED
+  DECLINED
+  PENDING
+}
+
+model User {
+  id           String    @id @default(uuid())
+  email        String    @unique
+  passwordHash String
+  role         Role      @default(ANALYST)
+  createdAt    DateTime  @default(now())
+  reviewedAlerts FraudAlert[]
+  auditLogs    AuditLog[]
+
+  @@index([email])
+}
+
+model Customer {
+  id            String   @id @default(uuid())
+  fullName      String
+  email         String   @unique
+  phone         String
+  dateOfBirth   DateTime
+  address       String
+  city          String
+  state         String
+  accountNumber String   @unique
+  createdAt     DateTime @default(now())
+  transactions  Transaction[]
+
+  @@index([city, state])
+}
+
+model Merchant {
+  id           String   @id @default(uuid())
+  merchantName String
+  category     String
+  city         String
+  country      String
+  createdAt    DateTime @default(now())
+  transactions Transaction[]
+
+  @@index([category])
+}
+
+model Transaction {
+  id              String             @id @default(uuid())
+  customerId      String
+  merchantId      String
+  amount          Decimal            @db.Decimal(12, 2)
+  transactionTime DateTime           @default(now())
+  paymentMethod   String
+  deviceType      String
+  ipAddress       String
+  location        String
+  status          TransactionStatus  @default(PENDING)
+
+  customer        Customer           @relation(fields: [customerId], references: [id])
+  merchant        Merchant           @relation(fields: [merchantId], references: [id])
+  fraudPrediction FraudPrediction?
+
+  @@index([customerId])
+  @@index([merchantId])
+  @@index([transactionTime])
+}
+
+model MLModel {
+  id           String   @id @default(uuid())
+  modelName    String
+  algorithm    String
+  accuracy     Decimal  @db.Decimal(5, 4)
+  version      String
+  trainingDate DateTime
+  predictions  FraudPrediction[]
+}
+
+model FraudPrediction {
+  id               String            @id @default(uuid())
+  transactionId    String            @unique
+  modelId          String
+  predictionResult PredictionResult
+  confidenceScore  Decimal           @db.Decimal(5, 4)
+  predictionTime   DateTime          @default(now())
+
+  transaction      Transaction       @relation(fields: [transactionId], references: [id])
+  model            MLModel           @relation(fields: [modelId], references: [id])
+  fraudAlert       FraudAlert?
+
+  @@index([modelId])
+  @@index([predictionResult])
+}
+
+model FraudAlert {
+  id             String       @id @default(uuid())
+  predictionId   String       @unique
+  alertStatus    AlertStatus  @default(OPEN)
+  generatedTime  DateTime     @default(now())
+  reviewedById   String?
+  remarks        String?
+
+  prediction     FraudPrediction @relation(fields: [predictionId], references: [id])
+  reviewedBy     User?           @relation(fields: [reviewedById], references: [id])
+
+  @@index([alertStatus])
+}
+
+model AuditLog {
+  id            String   @id @default(uuid())
+  userId        String
+  action        String
+  tableAffected String
+  timestamp     DateTime @default(now())
+
+  user          User     @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([timestamp])
+}
