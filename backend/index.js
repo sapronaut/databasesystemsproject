@@ -11,6 +11,9 @@ app.use('/api/auth', require('./routes/auth'));
 app.use('/api/customers', authenticate, require('./routes/customers'));
 app.use('/api/transactions', authenticate, require('./routes/transactions'));
 app.use('/api/merchants', authenticate, require('./routes/merchants'));
+app.use('/api/predictions', authenticate, require('./routes/predictions'));
+app.use('/api/alerts', authenticate, require('./routes/alerts'));
+app.use('/api/analytics', authenticate, require('./routes/analytics'));
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
