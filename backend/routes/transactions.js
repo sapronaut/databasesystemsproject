@@ -4,10 +4,33 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
 router.get('/', async (req, res) => {
-  const transactions = await prisma.transaction.findMany({
-    include: { customer: true, merchant: true, fraudPrediction: true }
-  });
-  res.json(transactions);
+  const page = Math.max(parseInt(req.query.page) || 1, 1);
+  const limit = Math.min(Math.max(parseInt(req.query.limit) || 10, 1), 100);
+  const { status, search } = req.query;
+
+  const where = {};
+  if (status && ['APPROVED', 'DECLINED', 'PENDING'].includes(status)) {
+    where.status = status;
+  }
+  if (search) {
+    where.OR = [
+      { customer: { fullName: { contains: search, mode: 'insensitive' } } },
+      { merchant: { merchantName: { contains: search, mode: 'insensitive' } } }
+    ];
+  }
+
+  const [total, data] = await Promise.all([
+    prisma.transaction.count({ where }),
+    prisma.transaction.findMany({
+      where,
+      include: { customer: true, merchant: true, fraudPrediction: true },
+      orderBy: { transactionTime: 'desc' },
+      skip: (page - 1) * limit,
+      take: limit
+    })
+  ]);
+
+  res.json({ data, total, page, pages: Math.ceil(total / limit) });
 });
 
 router.get('/:id', async (req, res) => {
