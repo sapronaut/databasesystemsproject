@@ -11,6 +11,8 @@ datasource db {
 enum Role {
   ADMIN
   ANALYST
+  AUDITOR
+  CUSTOMER
 }
 
 enum PredictionResult {
@@ -30,41 +32,54 @@ enum TransactionStatus {
   PENDING
 }
 
+enum DisputeStatus {
+  OPEN
+  RESOLVED
+  REJECTED
+}
+
 model User {
-  id           String    @id @default(uuid())
-  email        String    @unique
-  passwordHash String
-  role         Role      @default(ANALYST)
-  createdAt    DateTime  @default(now())
+  id             String       @id @default(uuid())
+  email          String       @unique
+  passwordHash   String
+  role           Role         @default(ANALYST)
+  createdAt      DateTime     @default(now())
+  customerId     String?      @unique
+
+  customer       Customer?    @relation(fields: [customerId], references: [id])
   reviewedAlerts FraudAlert[]
-  auditLogs    AuditLog[]
+  auditLogs      AuditLog[]
+  resolvedDisputes Dispute[]
 
   @@index([email])
 }
 
 model Customer {
-  id            String   @id @default(uuid())
+  id            String        @id @default(uuid())
   fullName      String
-  email         String   @unique
+  email         String        @unique
   phone         String
   dateOfBirth   DateTime
   address       String
   city          String
   state         String
-  accountNumber String   @unique
-  createdAt     DateTime @default(now())
+  accountNumber String        @unique
+  createdAt     DateTime      @default(now())
+
   transactions  Transaction[]
+  disputes      Dispute[]
+  user          User?
 
   @@index([city, state])
 }
 
 model Merchant {
-  id           String   @id @default(uuid())
+  id           String        @id @default(uuid())
   merchantName String
   category     String
   city         String
   country      String
-  createdAt    DateTime @default(now())
+  createdAt    DateTime      @default(now())
   transactions Transaction[]
 
   @@index([category])
@@ -85,6 +100,7 @@ model Transaction {
   customer        Customer           @relation(fields: [customerId], references: [id])
   merchant        Merchant           @relation(fields: [merchantId], references: [id])
   fraudPrediction FraudPrediction?
+  disputes        Dispute[]
 
   @@index([customerId])
   @@index([merchantId])
@@ -92,10 +108,10 @@ model Transaction {
 }
 
 model MLModel {
-  id           String   @id @default(uuid())
+  id           String            @id @default(uuid())
   modelName    String
   algorithm    String
-  accuracy     Decimal  @db.Decimal(5, 4)
+  accuracy     Decimal           @db.Decimal(5, 4)
   version      String
   trainingDate DateTime
   predictions  FraudPrediction[]
@@ -118,10 +134,10 @@ model FraudPrediction {
 }
 
 model FraudAlert {
-  id             String       @id @default(uuid())
-  predictionId   String       @unique
-  alertStatus    AlertStatus  @default(OPEN)
-  generatedTime  DateTime     @default(now())
+  id             String          @id @default(uuid())
+  predictionId   String          @unique
+  alertStatus    AlertStatus     @default(OPEN)
+  generatedTime  DateTime        @default(now())
   reviewedById   String?
   remarks        String?
 
@@ -142,4 +158,24 @@ model AuditLog {
 
   @@index([userId])
   @@index([timestamp])
+}
+
+model Dispute {
+  id            String        @id @default(uuid())
+  transactionId String
+  customerId    String
+  reason        String
+  status        DisputeStatus @default(OPEN)
+  createdAt     DateTime      @default(now())
+  resolvedAt    DateTime?
+  resolvedById  String?
+  resolution    String?
+
+  transaction   Transaction   @relation(fields: [transactionId], references: [id])
+  customer      Customer      @relation(fields: [customerId], references: [id])
+  resolvedBy    User?         @relation(fields: [resolvedById], references: [id])
+
+  @@index([customerId])
+  @@index([transactionId])
+  @@index([status])
 }

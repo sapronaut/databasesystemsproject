@@ -1,20 +1,28 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const { authenticate } = require('./middleware/auth');
+const { authenticate, authorize } = require('./middleware/auth');
 
 const app = express();
 app.use(cors({ origin: process.env.CLIENT_URL ? process.env.CLIENT_URL.split(',') : true }));
 app.use(express.json());
 
+const staff = authorize('ADMIN', 'ANALYST', 'AUDITOR');
+const desk = authorize('ADMIN', 'ANALYST');
+const admin = authorize('ADMIN');
+
 app.use('/api/auth', require('./routes/auth'));
-app.use('/api/customers', authenticate, require('./routes/customers'));
-app.use('/api/transactions', authenticate, require('./routes/transactions'));
-app.use('/api/merchants', authenticate, require('./routes/merchants'));
-app.use('/api/predictions', authenticate, require('./routes/predictions'));
-app.use('/api/alerts', authenticate, require('./routes/alerts'));
-app.use('/api/analytics', authenticate, require('./routes/analytics'));
-app.use('/api/audit', authenticate, require('./routes/audit'));
+app.use('/api/me', authenticate, authorize('CUSTOMER'), require('./routes/me'));
+app.use('/api/customers', authenticate, desk, require('./routes/customers'));
+app.use('/api/transactions', authenticate, staff, require('./routes/transactions'));
+app.use('/api/merchants', authenticate, staff, require('./routes/merchants'));
+app.use('/api/predictions', authenticate, staff, require('./routes/predictions'));
+app.use('/api/alerts', authenticate, staff, require('./routes/alerts'));
+app.use('/api/analytics', authenticate, staff, require('./routes/analytics'));
+app.use('/api/disputes', authenticate, desk, require('./routes/disputes'));
+app.use('/api/audit', authenticate, authorize('ADMIN', 'AUDITOR'), require('./routes/audit'));
+app.use('/api/users', authenticate, admin, require('./routes/users'));
+app.use('/api/schema', authenticate, admin, require('./routes/schema'));
 
 app.use((err, req, res, next) => {
   if (err.code === 'P2002') {

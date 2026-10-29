@@ -4,7 +4,7 @@ const { PrismaClient } = require('@prisma/client');
 const { authorize } = require('../middleware/auth');
 const prisma = new PrismaClient();
 
-router.get('/', authorize('ADMIN', 'ANALYST'), async (req, res) => {
+router.get('/', async (req, res) => {
   const alerts = await prisma.fraudAlert.findMany({
     include: {
       prediction: { include: { transaction: { include: { customer: true, merchant: true } } } },
