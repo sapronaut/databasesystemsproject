@@ -12,6 +12,9 @@ const filters = [
 const statusPill = { OPEN: ['red', 'Open'], REVIEWED: ['green', 'Confirmed'], DISMISSED: ['grey', 'Dismissed'] };
 
 function Alerts() {
+  const user = JSON.parse(localStorage.getItem('user') || 'null');
+  const canReview = user.role === 'ADMIN' || user.role === 'ANALYST';
+
   const [alerts, setAlerts] = useState([]);
   const [filter, setFilter] = useState('ALL');
   const [loading, setLoading] = useState(true);
@@ -62,7 +65,7 @@ function Alerts() {
       <div className="page-head">
         <div>
           <h1 className="large-title">Alerts</h1>
-          <p className="subtitle">{alerts.filter((a) => a.alertStatus === 'OPEN').length} open</p>
+          <p className="subtitle">{alerts.filter((a) => a.alertStatus === 'OPEN').length} open{canReview ? '' : ' · read-only'}</p>
         </div>
         <div className="seg">
           {filters.map((f) => (
@@ -91,7 +94,7 @@ function Alerts() {
                 <span className={`pill ${color}`}>{label}</span>
                 <div className="row-sub">{(Number(a.prediction.confidenceScore) * 100).toFixed(0)}% confidence</div>
               </div>
-              {a.alertStatus === 'OPEN' && (
+              {canReview && a.alertStatus === 'OPEN' && (
                 <div className="row-actions">
                   <button className="btn danger small" onClick={() => openSheet(a, 'REVIEWED')}>Confirm fraud</button>
                   <button className="btn ghost small" onClick={() => openSheet(a, 'DISMISSED')}>Dismiss</button>
