@@ -33,15 +33,6 @@ function Layout() {
             <span className="brand-mark"><Shield /></span>
             FraudGuard
           </div>
-          {items.length > 1 && (
-            <nav className="tabs">
-              {items.map((item) => (
-                <NavLink key={item.to} to={item.to} end={item.end} className={({ isActive }) => (isActive ? 'active' : '')}>
-                  {item.label}
-                </NavLink>
-              ))}
-            </nav>
-          )}
           <span className="spacer" />
           <div className="user-chip">
             <span className="avatar-sm">{user.email.charAt(0).toUpperCase()}</span>
@@ -51,6 +42,17 @@ function Layout() {
           <button className="btn ghost small" onClick={signOut}>Sign out</button>
         </div>
       </header>
+      {items.length > 1 && (
+        <div className="nav-row">
+          <nav className="tabs">
+            {items.map((item) => (
+              <NavLink key={item.to} to={item.to} end={item.end} className={({ isActive }) => (isActive ? 'active' : '')}>
+                {item.label}
+              </NavLink>
+            ))}
+          </nav>
+        </div>
+      )}
       <main className="page">
         <Outlet />
       </main>

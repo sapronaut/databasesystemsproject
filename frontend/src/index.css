@@ -343,3 +343,15 @@ select.field { appearance: auto; }
   .tabs a { padding: 9px 12px; }
   .page { padding-bottom: 150px; }
 }
+
+.btn { white-space: nowrap; }
+.topbar-inner { flex-wrap: nowrap; }
+.nav-row { max-width: 1080px; margin: 0 auto; padding: 14px 20px 0; }
+.nav-row .tabs { flex-wrap: wrap; overflow: visible; max-width: 100%; }
+
+@media (max-width: 720px) {
+  .nav-row { padding: 0; max-width: none; }
+  .nav-row .tabs { flex-wrap: wrap; justify-content: center; }
+  .tabs a { padding: 9px 12px; }
+  .page { padding-bottom: 150px; }
+}
