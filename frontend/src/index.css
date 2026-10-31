@@ -318,3 +318,16 @@ select.field { appearance: auto; }
   .tabs a { flex: 0 0 auto; padding: 10px 14px; font-size: 13px; }
   .col-builder { grid-template-columns: 1fr 1fr; }
 }
+.btn { white-space: nowrap; }
+
+@media (max-width: 1180px) {
+  .topbar-inner { flex-wrap: wrap; row-gap: 8px; }
+  .tabs { order: 3; flex: 1 1 100%; max-width: 100%; }
+}
+
+@media (max-width: 720px) {
+  .topbar-inner { flex-wrap: nowrap; }
+  .tabs { flex-wrap: wrap; justify-content: center; overflow: visible; }
+  .tabs a { padding: 9px 12px; }
+  .page { padding-bottom: 150px; }
+}
